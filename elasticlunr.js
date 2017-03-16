@@ -948,7 +948,13 @@ elasticlunr.Index.prototype.search = function (query, userConfig) {
       fieldSearchResults[docRef] = fieldSearchResults[docRef] * fieldBoost;
     }
 
-    queryResults = this.mergeFieldResults(queryResults, fieldSearchResults, config[field]);
+    // a miss on an 'any' search should not wipe out the rest of the search results
+    if (
+      !query.any ||
+      (fieldSearchResults && Object.keys(fieldSearchResults).length > 0)
+    ) {
+      queryResults = this.mergeFieldResults(queryResults, fieldSearchResults, config[field]);
+    }
   }
 
   var results = [];
@@ -969,7 +975,10 @@ elasticlunr.Index.prototype.search = function (query, userConfig) {
  * Merge field search results by returning the union of the fields previously
  * matched with the next set.
  *
- * @param {Object} prevFields The previously matched fields, or null -- if null, indicates that this is the first match, which will take nextFields as the starting point
+ * If prevFields is null, this indicates that this is the first match, and as
+ * such returns nextFields in it's entirety.
+ *
+ * @param {Object} prevFields The previously matched fields, or null
  * @param {Object} nextFields The next set of matched fields
  * @param {elasticlunr.Configuration} config The user query config, JSON format.
  * @return {Object}
