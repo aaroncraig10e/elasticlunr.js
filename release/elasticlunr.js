@@ -132,6 +132,36 @@ elasticlunr.utils.toString = function (obj) {
 
   return obj.toString();
 };
+
+/**
+ * Return the intersection of two arrays.
+ *
+ * ie, given [1, 'two', 3] and ['two', 3, 4] returns ['two', 3]
+ *
+ * @param arrA {Array}
+ * @param arrB {Array}
+ * @return {Array}
+ * @memberOf Utils
+ */
+elasticlunr.utils.intersection = function (arrA, arrB) {
+  if (arrA.length + arrB.length === 0) {
+    return [];
+  }
+
+  var arr = [];
+
+  for (var i = 0; i < arrA.length; i++) {
+    for (var x = 0; x < arrB.length; x++) {
+      if (arrA[i] === arrB[x]) {
+        arr.push(arrA[i]);
+
+        break;
+      }
+    }
+  }
+
+  return arr;
+};
 /*!
  * elasticlunr.EventEmitter
  * Copyright (C) 2017 Oliver Nightingale
@@ -903,7 +933,7 @@ elasticlunr.Index.prototype.search = function (query, userConfig) {
     queryTokens[key] = this.pipeline.run(elasticlunr.tokenizer(query[key]));
   }
 
-  var queryResults = {};
+  var queryResults = null;
 
   for (var field in config) {
     var tokens = queryTokens[field] || queryTokens.any;
@@ -918,13 +948,7 @@ elasticlunr.Index.prototype.search = function (query, userConfig) {
       fieldSearchResults[docRef] = fieldSearchResults[docRef] * fieldBoost;
     }
 
-    for (var docRef in fieldSearchResults) {
-      if (docRef in queryResults) {
-        queryResults[docRef] += fieldSearchResults[docRef];
-      } else {
-        queryResults[docRef] = fieldSearchResults[docRef];
-      }
-    }
+    queryResults = this.mergeFieldResults(queryResults, fieldSearchResults, config[field]);
   }
 
   var results = [];
@@ -940,6 +964,37 @@ elasticlunr.Index.prototype.search = function (query, userConfig) {
   results.sort(function (a, b) { return b.score - a.score; });
   return results;
 };
+
+/**
+ * Merge field search results by returning the union of the fields previously
+ * matched with the next set.
+ *
+ * @param {Object} prevFields The previously matched fields, or null -- if null, indicates that this is the first match, which will take nextFields as the starting point
+ * @param {Object} nextFields The next set of matched fields
+ * @param {elasticlunr.Configuration} config The user query config, JSON format.
+ * @return {Object}
+ */
+elasticlunr.Index.prototype.mergeFieldResults = function(prevFields, nextFields, config) {
+  if (prevFields === null) {
+    return JSON.parse(JSON.stringify(nextFields));
+  }
+
+  var merged = {};
+  var bool = config.fieldBool;
+  var prevDocs = Object.keys(prevFields || {});
+  var nextDocs = Object.keys(nextFields || {});
+  var docRefs = bool === 'AND' ? elasticlunr.utils.intersection(prevDocs, nextDocs) : prevDocs.concat(nextDocs);
+
+  function scoreFromRef(fields, ref) {
+    return fields && fields[ref] ? fields[ref] : 0;
+  }
+
+  docRefs.forEach(function(ref) {
+    merged[ref] = scoreFromRef(prevFields, ref) + scoreFromRef(nextFields, ref);
+  });
+
+  return merged;
+}
 
 /**
  * search queryTokens in specified field.
@@ -2044,60 +2099,62 @@ elasticlunr.InvertedIndex.prototype.toJSON = function () {
  * elasticlunr.Configuration
  * Copyright (C) 2017 Wei Song
  */
- 
- /** 
+
+ /**
   * elasticlunr.Configuration is used to analyze the user search configuration.
-  * 
+  *
   * By elasticlunr.Configuration user could set query-time boosting, boolean model in each field.
-  * 
+  *
   * Currently configuration supports:
   * 1. query-time boosting, user could set how to boost each field.
   * 2. boolean model chosing, user could choose which boolean model to use for each field.
-  * 3. token expandation, user could set token expand to True to improve Recall. Default is False.
-  * 
-  * Query time boosting must be configured by field category, "boolean" model could be configured 
+  * 3. boolean field selection, user can choose that fields must all match a query "AND" or at least one field must match "OR" (default: "OR")
+  * 4. token expandation, user could set token expand to True to improve Recall. Default is False.
+  *
+  * Query time boosting must be configured by field category, "boolean" model could be configured
   * by both field category or globally as the following example. Field configuration for "boolean"
   * will overwrite global configuration.
   * Token expand could be configured both by field category or golbally. Local field configuration will
   * overwrite global configuration.
-  * 
+  *
   * configuration example:
   * {
-  *   fields:{ 
+  *   fields:{
   *     title: {boost: 2},
   *     body: {boost: 1}
   *   },
-  *   bool: "OR"
+  *   bool: "OR",
+  *   fieldBool: "OR"
   * }
-  * 
+  *
   * "bool" field configuation overwrite global configuation example:
   * {
-  *   fields:{ 
+  *   fields:{
   *     title: {boost: 2, bool: "AND"},
   *     body: {boost: 1}
   *   },
   *   bool: "OR"
   * }
-  * 
+  *
   * "expand" example:
   * {
-  *   fields:{ 
+  *   fields:{
   *     title: {boost: 2, bool: "AND"},
   *     body: {boost: 1}
   *   },
   *   bool: "OR",
   *   expand: true
   * }
-  * 
+  *
   * "expand" example for field category:
   * {
-  *   fields:{ 
+  *   fields:{
   *     title: {boost: 2, bool: "AND", expand: true},
   *     body: {boost: 1}
   *   },
   *   bool: "OR"
   * }
-  * 
+  *
   * setting the boost to 0 ignores the field (this will only search the title):
   * {
   *   fields:{
@@ -2108,10 +2165,10 @@ elasticlunr.InvertedIndex.prototype.toJSON = function () {
   *
   * then, user could search with configuration to do query-time boosting.
   * idx.search('oracle database', {fields: {title: {boost: 2}, body: {boost: 1}}});
-  * 
-  * 
+  *
+  *
   * @constructor
-  * 
+  *
   * @param {String} config user configuration
   * @param {Array} fields fields of index instance
   * @module
@@ -2137,7 +2194,7 @@ elasticlunr.Configuration = function (config, fields) {
 
 /**
  * Build default search configuration.
- * 
+ *
  * @param {Array} fields fields of index instance
  */
 elasticlunr.Configuration.prototype.buildDefaultConfig = function (fields) {
@@ -2146,42 +2203,46 @@ elasticlunr.Configuration.prototype.buildDefaultConfig = function (fields) {
     this.config[field] = {
       boost: 1,
       bool: "OR",
-      expand: false
+      expand: false,
+      fieldBool: 'OR'
     };
   }, this);
 };
 
 /**
  * Build user configuration.
- * 
+ *
  * @param {JSON} config User JSON configuratoin
  * @param {Array} fields fields of index instance
  */
 elasticlunr.Configuration.prototype.buildUserConfig = function (config, fields) {
-  var global_bool = "OR";
-  var global_expand = false;
+  var global = {
+    bool: 'OR',
+    expand: false,
+    fieldBool: 'OR'
+  };
 
   this.reset();
-  if ('bool' in config) {
-    global_bool = config['bool'] || global_bool;
-  }
 
-  if ('expand' in config) {
-    global_expand = config['expand'] || global_expand;
+  for (var entry in global) {
+    if (config[entry]) {
+      global[entry] = config[entry];
+    }
   }
 
   if ('fields' in config) {
     for (var field in config['fields']) {
       if (fields.indexOf(field) > -1) {
         var field_config = config['fields'][field];
-        var field_expand = global_expand;
+        var field_expand = global.expand;
         if (field_config.expand != undefined) {
           field_expand = field_config.expand;
         }
 
         this.config[field] = {
           boost: (field_config.boost || field_config.boost === 0) ? field_config.boost : 1,
-          bool: field_config.bool || global_bool,
+          bool: field_config.bool || global.bool,
+          fieldBool: global.fieldBool,
           expand: field_expand
         };
       } else {
@@ -2189,23 +2250,24 @@ elasticlunr.Configuration.prototype.buildUserConfig = function (config, fields) 
       }
     }
   } else {
-    this.addAllFields2UserConfig(global_bool, global_expand, fields);
+    this.addAllFields2UserConfig(global, fields);
   }
 };
 
 /**
  * Add all fields to user search configuration.
- * 
+ *
  * @param {String} bool Boolean model
  * @param {String} expand Expand model
  * @param {Array} fields fields of index instance
  */
-elasticlunr.Configuration.prototype.addAllFields2UserConfig = function (bool, expand, fields) {
+elasticlunr.Configuration.prototype.addAllFields2UserConfig = function (global, fields) {
   fields.forEach(function (field) {
     this.config[field] = {
       boost: 1,
-      bool: bool,
-      expand: expand
+      bool: global.bool,
+      expand: global.expand,
+      fieldBool: global.fieldBool
     };
   }, this);
 };
