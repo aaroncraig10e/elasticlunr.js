@@ -75,6 +75,13 @@ test("splitting strings with hyphens and spaces", function () {
   deepEqual(tokens, ['solve', 'for', 'a', 'b']);
 });
 
+test("splitting strings with punctuation", function () {
+  var simpleString = "Hello. World! 'This string' \"has punctuation\"",
+      tokens = elasticlunr.tokenizer(simpleString);
+
+  deepEqual(tokens, ['hello', 'world', 'this', 'string', 'has', 'punctuation']);
+});
+
 test("test with customized seperator", function () {
   var sep = /[\/]+/;
   var s = 'hello/world/I/love';
