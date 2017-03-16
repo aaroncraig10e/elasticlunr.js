@@ -8,7 +8,8 @@ test('constructor test', function () {
     title: {
       boost: 2,
       bool: "OR",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     }
   };
 
@@ -24,12 +25,14 @@ test('constructor test 2', function () {
     title: {
       boost: 3,
       bool: "OR",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     },
     body: {
       boost: 2,
       bool: "OR",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     }
   };
 
@@ -45,12 +48,14 @@ test('construct without user config', function () {
     title: {
       boost: 1,
       bool: "OR",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     },
     body: {
       boost: 1,
       bool: "OR",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     }
   };
 
@@ -60,18 +65,20 @@ test('construct without user config', function () {
 
 test('construct with user config for bool, but no field configured', function () {
   var fields = ['title', 'body'],
-      userConfig = '{"bool": "OR"';
+      userConfig = '{"bool": "OR"}';
 
   var target = {
     title: {
       boost: 1,
       bool: "OR",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     },
     body: {
       boost: 1,
       bool: "OR",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     }
   };
 
@@ -87,12 +94,14 @@ test('construct with user config for bool overwrited by field config', function 
     title: {
       boost: 3,
       bool: "AND",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     },
     body: {
       boost: 2,
       bool: "OR",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     }
   };
 
@@ -108,12 +117,14 @@ test('construct with user config without field boost', function () {
     title: {
       boost: 1,
       bool: "AND",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     },
     body: {
       boost: 1,
       bool: "OR",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     }
   };
 
@@ -129,12 +140,14 @@ test('construct with user config without bool setting', function () {
     title: {
       boost: 2,
       bool: "OR",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     },
     body: {
       boost: 1,
       bool: "OR",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     }
   };
 
@@ -150,7 +163,8 @@ test('construct with user config, search field not in idx._fields', function () 
     body: {
       boost: 2,
       bool: "OR",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     }
   };
 
@@ -175,12 +189,14 @@ test('construct with user config, json parse failed', function () {
     title: {
       boost: 1,
       bool: "OR",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     },
     body: {
       boost: 1,
       bool: "OR",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     }
   };
 
@@ -196,12 +212,14 @@ test('construct with user config, user config is empty string', function () {
     title: {
       boost: 1,
       bool: "OR",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     },
     body: {
       boost: 1,
       bool: "OR",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     }
   };
 
@@ -217,12 +235,14 @@ test('construct with user config, global expand config', function () {
     title: {
       boost: 3,
       bool: "AND",
-      expand: true
+      expand: true,
+      fieldBool: "OR"
     },
     body: {
       boost: 2,
       bool: "OR",
-      expand: true
+      expand: true,
+      fieldBool: "OR"
     }
   };
 
@@ -238,12 +258,14 @@ test('construct with user config, global expand config overwrite by local config
     title: {
       boost: 3,
       bool: "AND",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     },
     body: {
       boost: 2,
       bool: "OR",
-      expand: true
+      expand: true,
+      fieldBool: "OR"
     }
   };
 
@@ -259,12 +281,14 @@ test('construct with user config, global expand config overwrite by local config
     title: {
       boost: 3,
       bool: "AND",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     },
     body: {
       boost: 2,
       bool: "OR",
-      expand: true
+      expand: true,
+      fieldBool: "OR"
     }
   };
 
@@ -280,12 +304,14 @@ test('construct with user config, global expand config overwrite by local config
     title: {
       boost: 3,
       bool: "AND",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     },
     body: {
       boost: 2,
       bool: "OR",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     }
   };
 
@@ -301,12 +327,14 @@ test("construct with user config, boost of 0 shouldn't be overwritten", function
     title: {
       boost: 0,
       bool: "OR",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     },
     body: {
       boost: 2,
       bool: "OR",
-      expand: false
+      expand: false,
+      fieldBool: "OR"
     }
   };
 

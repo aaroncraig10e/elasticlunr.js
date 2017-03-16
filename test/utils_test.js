@@ -94,3 +94,12 @@ test('test toString of String', function () {
   equal(elasticlunr.utils.toString(e), e);
   equal(elasticlunr.utils.toString(f), f);
 });
+
+test('intersection of arrays', function () {
+  var arrA = [1, 'two', 3, 'apple'];
+  var arrB = ['apple', 'two', 1];
+  var arr = elasticlunr.utils.intersection(arrA, arrB).sort();
+  var exp = [1, 'apple', 'two'].sort()
+
+  deepEqual(arr, exp);
+});

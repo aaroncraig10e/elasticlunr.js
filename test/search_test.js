@@ -85,3 +85,10 @@ test('allows different searches for different fields', function () {
   equal(results[0].ref, 'c');
   equal(results[1].ref, 'a');
 });
+
+test('AND different searches for different fields', function () {
+  var results = this.idx.search({title: 'green', body: 'nice'}, {fieldBool: 'AND'});
+
+  equal(results.length, 1);
+  equal(results[0].ref, 'a');
+});
