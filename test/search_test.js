@@ -92,3 +92,11 @@ test('AND different searches for different fields', function () {
   equal(results.length, 1);
   equal(results[0].ref, 'a');
 });
+
+test('AND different searches for different fields with misses', function () {
+  var results = this.idx.search({title: 'green', any: 'foo'}, {fieldBool: 'AND'});
+
+  equal(results.length, 2);
+  equal(results[0].ref, 'b');
+  equal(results[1].ref, 'a');
+});
