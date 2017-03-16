@@ -241,29 +241,25 @@ elasticlunr.EventEmitter.prototype.hasHandler = function (name) {
  */
 elasticlunr.tokenizer = function (str) {
   if (!arguments.length || str === null || str === undefined) return [];
-  if (Array.isArray(str)) {
-    var arr = str.filter(function(token) {
-      if (token === null || token === undefined) {
-        return false;
-      }
 
-      return true;
+  var arr = Array.isArray(str) ? str : [str];
+  var tokens = [];
+  var stripPunc = elasticlunr.tokenizer.defaultSeperator === elasticlunr.tokenizer.seperator;
+
+  arr
+    .filter(function(t) { return t !== null && typeof t !== 'undefined'; })
+    .map(function(t) { return elasticlunr.utils.toString(t).toLowerCase(); })
+    .forEach(function(t) {
+      var stripped = stripPunc ? t.replace(/[\u2000-\u206F\u2E00-\u2E7F\\'!"#$%&()*+,\-.\/:;<=>?@\[\]^_`{|}~]/g, ' ') : t;
+
+      tokens = tokens.concat(
+        stripped
+          .split(elasticlunr.tokenizer.seperator)
+          .filter(function(t) { return t !== ''; })
+      );
     });
 
-    arr = arr.map(function (t) {
-      return elasticlunr.utils.toString(t).toLowerCase();
-    });
-
-    var out = [];
-    arr.forEach(function(item) {
-      var tokens = item.split(elasticlunr.tokenizer.seperator);
-      out = out.concat(tokens);
-    }, this);
-
-    return out;
-  }
-
-  return str.toString().trim().toLowerCase().split(elasticlunr.tokenizer.seperator);
+  return tokens;
 };
 
 /**
